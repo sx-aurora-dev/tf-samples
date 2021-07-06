@@ -22,6 +22,7 @@ def main():
     parser.add_argument("--inter-threads", type=int)
     parser.add_argument("--disable-eager", action="store_true")
     parser.add_argument("-m", "--model", type=str)
+    parser.add_argument("-d", "--device", type=str, default="")
     parser.add_argument("file")
     args = parser.parse_args()
 
@@ -34,19 +35,21 @@ def main():
       tf.compat.v1.disable_eager_execution()
 
     if args.inter_threads:
-        print("inter_threads={}".format(args.inter_threads))
+        if args.verbose > 0:
+            print("inter_threads={}".format(args.inter_threads))
         tf.config.threading.set_inter_op_parallelism_threads(args.inter_threads)
 
-    if args.model == "resnet50":
-        preprocess_input = applications.resnet50.preprocess_input
-        decode_predictions = applications.resnet50.decode_predictions
-        model = applications.resnet.ResNet50(weights='imagenet')
-    elif args.model == "mobilenet_v2":
-        preprocess_input = applications.mobilenet_v2.preprocess_input
-        decode_predictions = applications.mobilenet_v2.decode_predictions
-        model = applications.mobilenet_v2.MobileNetV2(include_top=True, weights='imagenet', input_tensor=None, input_shape=None, pooling=None, classes=1000)
-    else:
-        raise Exception("Use -m <resnet50|mobilenet_v2>")
+    with tf.device(args.device):
+        if args.model == "resnet50":
+            preprocess_input = applications.resnet50.preprocess_input
+            decode_predictions = applications.resnet50.decode_predictions
+            model = applications.resnet.ResNet50(weights='imagenet')
+        elif args.model == "mobilenet_v2":
+            preprocess_input = applications.mobilenet_v2.preprocess_input
+            decode_predictions = applications.mobilenet_v2.decode_predictions
+            model = applications.mobilenet_v2.MobileNetV2(include_top=True, weights='imagenet', input_tensor=None, input_shape=None, pooling=None, classes=1000)
+        else:
+            raise Exception("Use -m <resnet50|mobilenet_v2>")
 
     if args.verbose > 0:
         print("model: {}".format(args.model))
@@ -71,12 +74,15 @@ def main():
             with summary_writer.as_default():
                 tf.summary.trace_export(name="resnet50", step=n, profiler_outdir=log_dir)
 
-        print("Elapsed {:.3f} sec for {} images. {:.3f} images/sec".format(elapsed, args.batch, args.batch / elapsed))
+        if args.verbose > 0:
+            print("Elapsed {:.3f} sec for {} images. {:.3f} images/sec".format(elapsed, args.batch, args.batch / elapsed))
 
-    if args.verbose > 0:
-        tmp = decode_predictions(preds, top=3)
+    tmp = decode_predictions(preds, top=3)
+    if args.verbose > 1:
         for pred in tmp:
             print(pred)
+
+    return [elapsed, tmp]
 
 if __name__ == "__main__":
     main()
