@@ -15,7 +15,7 @@ Elapsed 0.182 sec for 32 images. 176.227 images/sec
 Elapsed 0.180 sec for 32 images. 177.964 images/sec
 
 # CPU (Xeon Gold 6226 x 2)
-% python keras_applications/predict.py --batch 48 -m resnet50 -n 5 Elephant.jpg --disable-eager --nchw -d /cpu:0 -v
+% python keras_applications/predict.py --batch 48 -m resnet50 -n 5 Elephant.jpg --disable-eager -d /cpu:0 -v
 Elapsed 1.319 sec for 48 images. 36.398 images/sec
 Elapsed 0.391 sec for 48 images. 122.717 images/sec
 Elapsed 0.379 sec for 48 images. 126.777 images/sec
